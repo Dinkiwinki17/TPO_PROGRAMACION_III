@@ -10,6 +10,7 @@ public class JuegoEscape {
 
 	
 	    public static void main(String[] args) {
+			System.out.println("Hola");
 	    	ResolverJuegoImpl juego = new ResolverJuegoImpl();
 	    	int cantidadSalas = 6;
 	    	Incompatibilidades ic1 = new Incompatibilidades("A","B");
