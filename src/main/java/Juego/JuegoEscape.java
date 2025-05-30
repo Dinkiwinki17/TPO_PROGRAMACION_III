@@ -1,52 +1,35 @@
 package Juego;
 
 import java.util.*;
-
-import salasEscape.Asignacion;
-import salasEscape.Incompatibilidades;
-import salasEscape.Restricciones;
+import salasEscape.*;
 
 public class JuegoEscape {
 
-	
-	    public static void main(String[] args) {
-			System.out.println("Hola");
-	    	ResolverJuegoImpl juego = new ResolverJuegoImpl();
-	    	int cantidadSalas = 6;
-	    	Incompatibilidades ic1 = new Incompatibilidades("A","B");
-	    	ArrayList<Incompatibilidades> imcop = new ArrayList<Incompatibilidades>();
-	    	
-	    	
-	    	imcop.add(ic1);
-	    	
-	    	Restricciones rest = new Restricciones();
-	    	
-	    	rest.agregarRestriccion("A", 1);
-	    	rest.agregarRestriccion("A", 4);
-	    	
-	    	rest.agregarRestriccion("C", 3);
-	    	
-	    	ArrayList<String> personas = new ArrayList<String>();
-	    	personas.add("A");
-	    	personas.add("B");
-	    	personas.add("C");
-	    	personas.add("D");
-	    	personas.add("E");
-	    	personas.add("F");
-	    	
-	    
-	    	
-	
-	    	ArrayList<Asignacion> resultado = juego.resolverAsignaciones(personas, cantidadSalas, imcop, rest);
-	    	imprimirAsignacion(resultado);
-	    	
-	     
-	    }
-	    
-	    public static void imprimirAsignacion(ArrayList<Asignacion> resultado) {
-	    	
-	    	for (int i= 0; i < resultado.size(); i++) {
-	    		System.out.println(resultado.get(i).getPersona()+"-"+resultado.get(i).getSala());
-	    	}
-	    }
+	public static void main(String[] args) {
+		ArrayList<String> personas = new ArrayList<>(Arrays.asList("A", "B", "C", "D"));
+		int cantSalas = 4;
+
+		Restricciones restricciones = new Restricciones();
+		restricciones.agregarRestriccion("A", 2);
+		restricciones.agregarRestriccion("B", 3);
+		restricciones.agregarRestriccion("B", 4);
+		restricciones.agregarRestriccion("C", 1);
+		restricciones.agregarRestriccion("D", 2);
+
+		ArrayList<Incompatibilidades> incompatibilidades = new ArrayList<>();
+		incompatibilidades.add(new Incompatibilidades("A", "B"));
+		incompatibilidades.add(new Incompatibilidades("C", "D"));
+
+		ResolverJuego resolutor = new ResolverJuegoImpl();
+		ArrayList<Asignacion> asignaciones = resolutor.resolverAsignaciones(personas, cantSalas, incompatibilidades, restricciones);
+
+		if (asignaciones.isEmpty()) {
+			System.out.println("No se encontró una solución válida.");
+		} else {
+			System.out.println("Solución encontrada:");
+			for (Asignacion asignacion : asignaciones) {
+				System.out.println("Persona " + asignacion.getPersona() + " → Sala " + asignacion.getSala());
+			}
+		}
+	}
 }
