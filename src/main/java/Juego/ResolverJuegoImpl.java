@@ -1,91 +1,89 @@
 package Juego;
 
 import java.util.*;
-import salasEscape.*;
 
+import salasEscape.Asignacion;
+import salasEscape.Incompatibilidades;
+import salasEscape.ResolverJuego;
+import salasEscape.Restricciones;
 
 public class ResolverJuegoImpl implements ResolverJuego {
 
+    private ArrayList<Asignacion> resultadoFinal;
+    private Set<Integer> salasOcupadas;
+    private Map<String, String> asignacionTemporal;
+    private Map<String, Set<String>> incompatibilidadesMap;
+
     @Override
-    public ArrayList<Asignacion> resolverAsignaciones(ArrayList<String> personas, int cantSalas,
-            ArrayList<Incompatibilidades> incompatibilidades, Restricciones restricciones) {
+    public ArrayList<Asignacion> resolverAsignaciones(ArrayList<String> personas, int cantSalasPersonas,
+                                                      ArrayList<Incompatibilidades> incompatibilidades, Restricciones restricciones) {
 
-        ArrayList<Asignacion> resultado = new ArrayList<>();
-        boolean[] salasOcupadas = new boolean[cantSalas + 1];
-        HashMap<String, Integer> asignacionesParciales = new HashMap<>();
+        resultadoFinal = new ArrayList<>();
+        salasOcupadas = new HashSet<>();
+        asignacionTemporal = new HashMap<>();
+        incompatibilidadesMap = construirMapaIncompatibilidades(incompatibilidades);
 
-        // Map auxiliar porque no podemos consultar Restricciones
-        Map<String, Set<Integer>> mapaRestricciones = construirMapaRestricciones(personas);
+        backtrack(0, personas, cantSalasPersonas, restricciones);
 
-        boolean exito = backtrack(personas, 0, salasOcupadas, asignacionesParciales, mapaRestricciones, incompatibilidades);
+        return resultadoFinal;
+    }
 
-        if (exito) {
-            for (String persona : personas) {
-                int sala = asignacionesParciales.get(persona);
-                resultado.add(new Asignacion(persona, sala));
+    private boolean backtrack(int index, ArrayList<String> personas, int cantSalas, Restricciones restricciones) {
+        if (index == personas.size()) {
+            for (Map.Entry<String, String> entry : asignacionTemporal.entrySet()) {
+                resultadoFinal.add(new Asignacion(entry.getKey(), Integer.parseInt(entry.getValue())));
             }
+            return true;
         }
 
-        return resultado;
-    }
+        String persona = personas.get(index);
 
-    private Map<String, Set<Integer>> construirMapaRestricciones(ArrayList<String> personas) {
-        Map<String, Set<Integer>> mapa = new HashMap<>();
-        for (String persona : personas) {
-            mapa.put(persona, new HashSet<>());
-        }
+        for (int sala = 1; sala <= cantSalas; sala++) {
+            if (salasOcupadas.contains(sala)) continue;
+            if (!restricciones.puedeEstarEnSala(persona, sala)) continue;
+            if (!esCompatible(persona, sala)) continue;
 
-        //  Esto no se puede llenar aquí directamente. El main debe llenarlo junto con restricciones
-        return mapa;
-    }
+            // Asignar provisionalmente
+            asignacionTemporal.put(persona, String.valueOf(sala));
+            salasOcupadas.add(sala);
 
-    private boolean backtrack(ArrayList<String> personas, int idx, boolean[] salasOcupadas,
-            HashMap<String, Integer> asignaciones, Map<String, Set<Integer>> mapaRestricciones,
-            ArrayList<Incompatibilidades> incompatibilidades) {
-
-        if (idx == personas.size()) return true;
-
-        String persona = personas.get(idx);
-
-        for (int sala = 1; sala < salasOcupadas.length; sala++) {
-            if (salasOcupadas[sala]) continue;
-            if (mapaRestricciones.get(persona).contains(sala)) continue;
-            if (!esCompatible(persona, sala, asignaciones, incompatibilidades)) continue;
-
-            asignaciones.put(persona, sala);
-            salasOcupadas[sala] = true;
-
-            if (backtrack(personas, idx + 1, salasOcupadas, asignaciones, mapaRestricciones, incompatibilidades)) {
+            if (backtrack(index + 1, personas, cantSalas, restricciones)) {
                 return true;
             }
 
-            asignaciones.remove(persona);
-            salasOcupadas[sala] = false;
+            // Deshacer
+            asignacionTemporal.remove(persona);
+            salasOcupadas.remove(sala);
         }
 
         return false;
     }
 
-    private boolean esCompatible(
-    	    String persona,
-    	    int sala,
-    	    HashMap<String, Integer> asignaciones,
-    	    ArrayList<Incompatibilidades> incompatibilidades
-    	) {
-    	    for (Incompatibilidades inc : incompatibilidades) {
-    	        String p1 = inc.getPersona1();
-    	        String p2 = inc.getPersona2();
+    private boolean esCompatible(String persona, int sala) {
+        Set<String> incompatibles = incompatibilidadesMap.getOrDefault(persona, new HashSet<>());
 
-    	        if (p1.equals(persona) || p2.equals(persona)) {
-    	            String otra = p1.equals(persona) ? p2 : p1;
-    	            if (asignaciones.containsKey(otra)) {
-    	                int salaOtra = asignaciones.get(otra);
-    	                if (Math.abs(sala - salaOtra) == 1) {
-    	                    return false;
-    	                }
-    	            }
-    	        }
-    	    }
-    	    return true;
-    	}
+        for (Map.Entry<String, String> entry : asignacionTemporal.entrySet()) {
+            String otraPersona = entry.getKey();
+            int otraSala = Integer.parseInt(entry.getValue());
+
+            if (incompatibles.contains(otraPersona)) {
+                if (Math.abs(otraSala - sala) == 1) {
+                    return false; // están en salas consecutivas
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private Map<String, Set<String>> construirMapaIncompatibilidades(ArrayList<Incompatibilidades> lista) {
+        Map<String, Set<String>> map = new HashMap<>();
+
+        for (Incompatibilidades inc : lista) {
+            map.computeIfAbsent(inc.getPersona1(), k -> new HashSet<>()).add(inc.getPersona2());
+            map.computeIfAbsent(inc.getPersona2(), k -> new HashSet<>()).add(inc.getPersona1());
+        }
+
+        return map;
+    }
 }
