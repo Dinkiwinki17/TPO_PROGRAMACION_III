@@ -11,27 +11,27 @@ public class ResolverJuegoImpl implements ResolverJuego {
 
     private ArrayList<Asignacion> resultadoFinal;
     private Set<Integer> salasOcupadas;
-    private Map<String, String> asignacionTemporal;
+    private Map<String, Integer> asignacionTemporal;
     private Map<String, Set<String>> incompatibilidadesMap;
 
     @Override
-    public ArrayList<Asignacion> resolverAsignaciones(ArrayList<String> personas, int cantSalasPersonas,
-                                                      ArrayList<Incompatibilidades> incompatibilidades, Restricciones restricciones) {
+    public ArrayList<Asignacion> resolverAsignaciones(ArrayList<String> personas, int cantSalas,
+            ArrayList<Incompatibilidades> incompatibilidades, Restricciones restricciones) {
 
         resultadoFinal = new ArrayList<>();
         salasOcupadas = new HashSet<>();
         asignacionTemporal = new HashMap<>();
         incompatibilidadesMap = construirMapaIncompatibilidades(incompatibilidades);
 
-        backtrack(0, personas, cantSalasPersonas, restricciones);
+        backtrack(0, personas, cantSalas, restricciones);
 
         return resultadoFinal;
     }
 
     private boolean backtrack(int index, ArrayList<String> personas, int cantSalas, Restricciones restricciones) {
         if (index == personas.size()) {
-            for (Map.Entry<String, String> entry : asignacionTemporal.entrySet()) {
-                resultadoFinal.add(new Asignacion(entry.getKey(), Integer.parseInt(entry.getValue())));
+            for (Map.Entry<String, Integer> entry : asignacionTemporal.entrySet()) {
+                resultadoFinal.add(new Asignacion(entry.getKey(), entry.getValue()));
             }
             return true;
         }
@@ -39,12 +39,15 @@ public class ResolverJuegoImpl implements ResolverJuego {
         String persona = personas.get(index);
 
         for (int sala = 1; sala <= cantSalas; sala++) {
-            if (salasOcupadas.contains(sala)) continue;
-            if (!restricciones.puedeEstarEnSala(persona, sala)) continue;
-            if (!esCompatible(persona, sala)) continue;
+            if (salasOcupadas.contains(sala))
+                continue;
+            if (!restricciones.puedeEstarEnSala(persona, sala))
+                continue;
+            if (!esCompatible(persona, sala))
+                continue;
 
             // Asignar provisionalmente
-            asignacionTemporal.put(persona, String.valueOf(sala));
+            asignacionTemporal.put(persona, sala);
             salasOcupadas.add(sala);
 
             if (backtrack(index + 1, personas, cantSalas, restricciones)) {
@@ -62,9 +65,9 @@ public class ResolverJuegoImpl implements ResolverJuego {
     private boolean esCompatible(String persona, int sala) {
         Set<String> incompatibles = incompatibilidadesMap.getOrDefault(persona, new HashSet<>());
 
-        for (Map.Entry<String, String> entry : asignacionTemporal.entrySet()) {
+        for (Map.Entry<String, Integer> entry : asignacionTemporal.entrySet()) {
             String otraPersona = entry.getKey();
-            int otraSala = Integer.parseInt(entry.getValue());
+            int otraSala = entry.getValue();
 
             if (incompatibles.contains(otraPersona)) {
                 if (Math.abs(otraSala - sala) == 1) {

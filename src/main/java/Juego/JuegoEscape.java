@@ -15,8 +15,6 @@ public class JuegoEscape {
 			}
 
 			ArrayList<Incompatibilidades> incompatibilidades = new ArrayList<>();
-			// Podés agregar restricciones si querés, por ahora dejamos sin para evaluar el
-			// caso peor
 
 			Restricciones restricciones = new Restricciones();
 
