@@ -5,57 +5,48 @@ import salasEscape.*;
 
 public class JuegoEscape {
 
-	public static void medirTiempos(ResolverJuego juego) {
-		System.out.printf("%-10s%-15s\n", "N", "Tiempo (ms)");
-
-		for (int n = 2; n <= 10; n++) {
-			ArrayList<String> personas = new ArrayList<>();
-			for (int i = 0; i < n; i++) {
-				personas.add("P" + i);
-			}
-
-			ArrayList<Incompatibilidades> incompatibilidades = new ArrayList<>();
-
-			Restricciones restricciones = new Restricciones();
-
-			long inicio = System.currentTimeMillis();
-			ArrayList<Asignacion> resultado = juego.resolverAsignaciones(personas, n, incompatibilidades,
-					restricciones);
-			long fin = System.currentTimeMillis();
-
-			System.out.printf("%-10d%-15d\n", n, (fin - inicio));
-		}
-	}
-
 	public static void main(String[] args) {
-		ArrayList<String> personas = new ArrayList<>(Arrays.asList("A", "B", "C", "D"));
-		int cantSalas = 4;
+		ArrayList<String> personas = new ArrayList<>();
+		for (int i = 0; i < 1000; i++) {
+			personas.add(String.format("%04d", i));
+		}
+		int cantSalas = personas.size();
 
 		Restricciones restricciones = new Restricciones();
-		restricciones.agregarRestriccion("A", 2);
-		restricciones.agregarRestriccion("B", 3);
-		restricciones.agregarRestriccion("B", 4);
-		restricciones.agregarRestriccion("C", 1);
-		restricciones.agregarRestriccion("D", 2);
 
 		ArrayList<Incompatibilidades> incompatibilidades = new ArrayList<>();
-		incompatibilidades.add(new Incompatibilidades("A", "B"));
-		incompatibilidades.add(new Incompatibilidades("C", "D"));
 
 		ResolverJuego resolutor = new ResolverJuegoImpl();
-		ArrayList<Asignacion> asignaciones = resolutor.resolverAsignaciones(personas, cantSalas, incompatibilidades,
-				restricciones);
+
+
+	// Medir el tiempo de ejecución
+		long startTime = System.nanoTime();
+		ArrayList<Asignacion> asignaciones = resolutor.resolverAsignaciones(personas, cantSalas, incompatibilidades, restricciones);
+		long endTime = System.nanoTime();
+
+	// Calcular el tiempo transcurrido en nanosegundos
+		long duration = endTime - startTime;
+
+	// Convertir nanosegundos a milisegundos
+		double durationInMillis = duration / 1_000_000.0;
+		String tiempoEjecucion = "Tiempo de ejecución para " + cantSalas + " personas es: " + durationInMillis + " milisegundos";
+
+
+
 
 		if (asignaciones.isEmpty()) {
 			System.out.println("No se encontró una solución válida.");
+			// Imprimir el tiempo de ejecución
+			System.out.println(tiempoEjecucion);
 		} else {
 			System.out.println("Solución encontrada:");
 			for (Asignacion asignacion : asignaciones) {
 				System.out.println("Persona " + asignacion.getPersona() + " → Sala " + asignacion.getSala());
 			}
+			// Imprimir el tiempo de ejecución
+			System.out.println(tiempoEjecucion);
 		}
-
-		medirTiempos(resolutor);
 	}
-
 }
+
+
